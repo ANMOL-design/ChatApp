@@ -1,4 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:chat_app/widgets/user_image_picker.dart';
+
+final _firebase = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,17 +18,69 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  File? _selectedImage;
+
   var _isLogin = true;
+  var isLoading = false;
   var _enteredEmail = '';
   var _enteredPassword = '';
 
-  void _submit() {
+  void _submit() async {
     final isValid = _formKey.currentState!.validate();
 
-    if (isValid) {
-      _formKey.currentState!.save();
-      print(_enteredEmail);
-      print(_enteredPassword);
+    // checking that the image was selected
+    if (!isValid || !_isLogin && _selectedImage == null) {
+      // show error message ...
+      return;
+    }
+
+    _formKey.currentState!.save();
+
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      if (_isLogin) {
+        // Login User
+        await _firebase.signInWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+      } else {
+        // Sign Up
+        final userCredentials = await _firebase.createUserWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+
+        // upload the selected Image using Firebase Storage
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('user_images')
+            .child('${userCredentials.user!.uid}.jpg');
+
+        await storageRef.putFile(_selectedImage!);
+        final imageURL = await storageRef.getDownloadURL();
+
+        print(imageURL);
+      }
+    } on FirebaseAuthException catch (error) {
+      // error handling
+      if (error.code == 'email-already-in-use') {
+        // Though error email already exist
+      }
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).clearSnackBars();
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message ?? 'Authentication failed.'),
+        ),
+      );
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -64,6 +123,14 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ),
                           ),
+                          // Showing the Image Picker Conditionally
+                          if (!_isLogin)
+                            UserImagePicker(
+                              onPickImage: (image) {
+                                _selectedImage = image;
+                              },
+                            ),
+
                           TextFormField(
                             decoration: const InputDecoration(
                               labelText: "Email Address",
@@ -103,25 +170,30 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(
                             height: 16,
                           ),
-                          ElevatedButton(
-                            onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
+                          // Show Loader
+                          if (isLoading) const CircularProgressIndicator(),
+                          // Show & Hide Buttons
+                          if (!isLoading)
+                            ElevatedButton(
+                              onPressed: _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                              ),
+                              child: Text(_isLogin ? 'Login' : 'Sign Up'),
                             ),
-                            child: Text(_isLogin ? 'Login' : 'Sign Up'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isLogin = !_isLogin;
-                              });
-                            },
-                            child: Text(_isLogin
-                                ? 'Create an Account'
-                                : 'Already have an Account.'),
-                          ),
+                          if (!isLoading)
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isLogin = !_isLogin;
+                                });
+                              },
+                              child: Text(_isLogin
+                                  ? 'Create an Account'
+                                  : 'Already have an Account.'),
+                            ),
                         ],
                       ),
                     ),
