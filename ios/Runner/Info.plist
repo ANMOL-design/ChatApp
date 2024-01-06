@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -22,14 +24,23 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>NSPhotoLibraryUsageDescription</string>
-	<key>Our app need permissions to access gallery.</key>
-	<string>NSCameraUsageDescription</string>
-	<key>Our app need permissions to access camera.</key>
-	<string>NSMicrophoneUsageDescription</string>
-	<key>Our app need permissions to access microphone.</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>FLTEnableImpeller</key>
+	<false />
+	<key>Our app need permissions to access camera.</key>
+	<string>NSMicrophoneUsageDescription</string>
+	<key>Our app need permissions to access gallery.</key>
+	<string>NSCameraUsageDescription</string>
+	<key>Our app need permissions to access microphone.</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -49,9 +60,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
 </dict>
 </plist>

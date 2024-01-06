@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:chat_app/widgets/user_image_picker.dart';
 
@@ -25,6 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var isLoading = false;
   var _enteredEmail = '';
   var _enteredPassword = '';
+  var _enteredUserName = '';
 
   void _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -63,7 +65,14 @@ class _AuthScreenState extends State<AuthScreen> {
         await storageRef.putFile(_selectedImage!);
         final imageURL = await storageRef.getDownloadURL();
 
-        print(imageURL);
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+          'username': _enteredUserName,
+          'email': _enteredEmail,
+          'image_url': imageURL
+        });
       }
     } on FirebaseAuthException catch (error) {
       // error handling
@@ -131,6 +140,25 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                             ),
 
+                          if (!_isLogin)
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: "Username",
+                              ),
+                              enableSuggestions: false,
+                              keyboardType: TextInputType.text,
+                              autocorrect: false,
+                              validator: (value) {
+                                if (value == null || value.trim().length < 4) {
+                                  return 'Name must be atleast 4 characters';
+                                }
+
+                                return null;
+                              },
+                              onSaved: (newValue) {
+                                _enteredUserName = newValue!;
+                              },
+                            ),
                           TextFormField(
                             decoration: const InputDecoration(
                               labelText: "Email Address",
